@@ -46,9 +46,6 @@ function StartState:update(dt)
         end
     end
     -- we no longer have this globally, so include here
-    if love.keyboard.wasPressed('escape') then
-        love.event.quit()
-    end
 end
 
 function StartState:render()

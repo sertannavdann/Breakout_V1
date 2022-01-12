@@ -158,6 +158,10 @@ function love.update(dt)
 
     -- reset keys pressed
     love.keyboard.keysPressed = {}
+    
+    if love.keyboard.wasPressed('escape') then
+        love.event.quit()
+    end
 end
 
 --[[

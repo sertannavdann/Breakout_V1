@@ -48,9 +48,11 @@ function PlayState:enter(params)
 end
 
 function PlayState:update(dt)
+    -- Little Hack to showcase keys in the upcoming levels
     if love.keyboard.wasPressed('x') then
         x = not x
     end
+    --Little Hack to show the powerups whenever we press z
     if love.keyboard.wasPressed('z') then
         self.powerup:reset(self.paddle.x + self.paddle.width / 2,
         self.paddle.y - self.paddle.height * 3, 
@@ -62,6 +64,7 @@ function PlayState:update(dt)
             level = self.level
         })
     end
+
     if self.paused then
         if love.keyboard.wasPressed('space') then
             self.paused = false
@@ -92,14 +95,12 @@ function PlayState:update(dt)
         ball.y = self.paddle.y - 8
         ball.dy = -ball.dy
 
-        --
         -- tweak angle of bounce based on where it hits the paddle
-        --
 
         -- if we hit the paddle on its left side while moving left...
         if ball.x < self.paddle.x + (self.paddle.width / 2) and self.paddle.dx < 0 then
             ball.dx = -50 + -(8 * (self.paddle.x + self.paddle.width / 2 - ball.x))
-        
+
         -- else if we hit the paddle on its right side while moving right...
         elseif ball.x > self.paddle.x + (self.paddle.width / 2) and self.paddle.dx > 0 then
            ball.dx = 50 + (8 * math.abs(self.paddle.x + self.paddle.width / 2 - ball.x))
@@ -141,7 +142,8 @@ function PlayState:update(dt)
 
                 -- multiply recover points by 2
                 self.recoverPoints = self.recoverPoints + math.min(100000, self.recoverPoints * 2)
-                self.paddle:grow()
+
+                self.paddle:reset(2)
                 -- play recover sound effect
                 gSounds['recover']:play()
             end
@@ -161,38 +163,35 @@ function PlayState:update(dt)
                 })
             end
 
-            --
             -- collision code for bricks
-            --
             -- we check to see if the opposite side of our velocity is outside of the brick;
             -- if it is, we trigger a collision on that side. else we're within the X + width of
             -- the brick and should check to see if the top or bottom edge is outside of the brick,
             -- colliding on the top or bottom accordingly 
-            --
 
             -- left edge; only check if we're moving right, and offset the check by a couple of pixels
             -- so that flush corner hits register as Y flips, not X flips
             if ball.x + 2 < brick.x and ball.dx > 0 then
-                
+
                 -- flip x velocity and reset position outside of brick
                 ball.dx = -ball.dx
                 ball.x = brick.x - 8
-            
+
             -- right edge; only check if we're moving left, , and offset the check by a couple of pixels
             -- so that flush corner hits register as Y flips, not X flips
             elseif ball.x + 6 > brick.x + brick.width and ball.dx < 0 then
-                
+
                 -- flip x velocity and reset position outside of brick
                 ball.dx = -ball.dx
                 ball.x = brick.x + 32
-            
+
             -- top edge if no X collisions, always check
             elseif ball.y < brick.y then
-                
+
                 -- flip y velocity and reset position outside of brick
                 ball.dy = -ball.dy
                 ball.y = brick.y - 8
-            
+
             -- bottom edge if no X collisions or top collision, last possibility
             else
                 
@@ -213,11 +212,12 @@ function PlayState:update(dt)
 
     -- if all the balls* goes below bounds,
     -- revert to serve state and decrease health
-    local active_balls = 0
+    local active_balls = num_balls
     for j, ball in pairs(self.balls) do
         if ball.y >= VIRTUAL_HEIGHT then
             gSounds['hurt']:play()
             ball.active = false
+            num_balls = num_balls - num_balls
         else
             num_balls = num_balls + 1
         end
@@ -257,7 +257,6 @@ function PlayState:update(dt)
     for k, brick in pairs(self.bricks) do
         brick:update(dt)
     end
-
 
         if love.keyboard.wasPressed('escape') then
             love.event.quit()

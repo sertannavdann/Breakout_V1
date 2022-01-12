@@ -1,5 +1,3 @@
---[[ Got powerup from an older assignment and strictly change and manipulate the code ]]
-
 --[[
     GD50
     Breakout Remake
@@ -66,7 +64,7 @@ function Powerup:init(x, y)
     self.dy = 0
     self.active = false
     self.skin = 0
-    self.psystem = nil
+    self.particleSystem = nil
 end
 
 function Powerup:reset(x, y, options)
@@ -79,50 +77,56 @@ function Powerup:reset(x, y, options)
 
     -- "good" power ups should spawn more often than "bad" ones
     local needPowerupChoice = true
-    local sk = 0
+    local currentlyDroppingPowerup = 0
     while needPowerupChoice do
         -- choose powerup based on simple rules
-        if math.random(9) <= 1 then
-            sk = BAD_POWERUPS[math.random(NUM_BAD)]
+        if math.random(3) <= 1 then
+            currentlyDroppingPowerup = BAD_POWERUPS[math.random(NUM_BAD)]
         else
-            sk = GOOD_POWERUPS[math.random(NUM_GOOD)]
+            currentlyDroppingPowerup = GOOD_POWERUPS[math.random(NUM_GOOD)]
         end
 
         -- check that we're "happy" with this choice - assume it's OK and
         -- look for exceptions
         needPowerupChoice = false
-        if POWERUPS['UNLOCK_KEY'] == sk and not options['needKey'] then
+        if POWERUPS['UNLOCK_KEY'] == currentlyDroppingPowerup and not options['needKey'] then
             needPowerupChoice = true  -- player doesn't need key yet
-        elseif POWERUPS['REMOVE_BALLS'] == sk and options['numBalls'] <= 1 then
+            
+        elseif POWERUPS['REMOVE_BALLS'] == currentlyDroppingPowerup and options['numBalls'] <= 1 then
             needPowerupChoice = true  -- there's only 1 ball in play
-        elseif POWERUPS['ADD_LIFE'] == sk and options['health'] >= 3 then
+        
+        elseif POWERUPS['ADD_LIFE'] == currentlyDroppingPowerup and options['health'] >= 3 then
             needPowerupChoice = true  -- player already has max lives
-        elseif POWERUPS['TAKE_LIFE'] == sk and options['health'] <= 1 then
+        
+        elseif POWERUPS['TAKE_LIFE'] == currentlyDroppingPowerup and options['health'] <= 1 then
             needPowerupChoice = true  -- player down to last life
-        elseif POWERUPS['PADDLE_UP'] == sk and options['paddleSize'] >= (options['level'] >= 6 and 2 or 4) then
+        
+        elseif POWERUPS['PADDLE_UP'] == currentlyDroppingPowerup and options['paddleSize'] >= (options['level'] >= 6 and 2 or 4) then
             needPowerupChoice = true  -- player's paddle already big enough for their skill
-        elseif POWERUPS['PADDLE_DOWN'] == sk and options['paddleSize'] <= 1 then
+        
+        elseif POWERUPS['PADDLE_DOWN'] == currentlyDroppingPowerup and options['paddleSize'] <= 1 then
             needPowerupChoice = true  -- player's paddle already at min size
+        
         end
     end
-    self.skin = sk
+    self.skin = currentlyDroppingPowerup
 
     -- particle system for when powerup hits paddle
-    self.psystem = love.graphics.newParticleSystem(gTextures['particle'], 64)
+    self.particleSystem = love.graphics.newParticleSystem(gTextures['particle'], 64)
 
     -- lasts between 0.5-1 seconds seconds
-    self.psystem:setParticleLifetime(0.5, 1.0)
+    self.particleSystem:setParticleLifetime(0.5, 1.0)
 
     -- give it an acceleration of anywhere between X1,Y1 and X2,Y2
     -- had these different to the settings in Ball.lua but it didn't look good
-    self.psystem:setLinearAcceleration(-15, 0, 15, 80)
+    self.particleSystem:setLinearAcceleration(-15, 0, 15, 80)
 
     -- spread of particles; normal looks more natural than uniform
-    self.psystem:setEmissionArea('normal', 10, 10)
+    self.particleSystem:setEmissionArea('normal', 10, 10)
 
     -- Fade to from blue to clear
     local n = self.skin
-    self.psystem:setColors(paletteColors[n].r, paletteColors[n].g, paletteColors[n].b, 0.8,
+    self.particleSystem:setColors(paletteColors[n].r, paletteColors[n].g, paletteColors[n].b, 0.8,
         paletteColors[n].r, paletteColors[n].g, paletteColors[n].b, 0.0) 
 end
 
@@ -151,7 +155,7 @@ end
 function Powerup:hit(playState)
     -- register the hit
     self.active = false
-    self.psystem:emit(64)
+    self.particleSystem:emit(64)
 
     -- execute the powerup based on skin
     if POWERUPS['ADD_LIFE'] == self.skin then
@@ -273,8 +277,8 @@ function Powerup:update(dt)
         if self.y > VIRTUAL_HEIGHT + self.height then
             self.active = false
         end
-    elseif self.psystem then
-        self.psystem:update(dt)
+    elseif self.particleSystem then
+        self.particleSystem:update(dt)
     end
 end
 
@@ -282,7 +286,7 @@ function Powerup:render()
     if self.active then
         love.graphics.draw(gTextures['main'], gFrames['powerups'][self.skin],
             self.x, self.y, self.rotation, 1, 1, self.width / 2, self.height / 2)
-    elseif self.psystem then
-        love.graphics.draw(self.psystem, self.x, self.y + self.height / 2)
+    elseif self.particleSystem then
+        love.graphics.draw(self.particleSystem, self.x, self.y + self.height / 2)
     end
 end
